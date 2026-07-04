@@ -1,28 +1,18 @@
-# Escape Room Booking & Session Manager
+# Escape Room Booking & Session Manager 🧟⚔️🌿🍀🥬
 
 A CLI-based back-office system for running an escape room venue: booking
 rooms, running live sessions, tracking cleaning turnaround, dynamic
 pricing, and reporting — built as a showcase of core software design
 principles (SOLID, design patterns, reflection, functional programming).
 
-## How to run
+## How to run 🏃‍➡️
 
 Requires JDK 17+.
 
-```bash
-# Compile
-find src -name "*.java" > sources.txt
-javac -d out @sources.txt
+Simply Run **Main.java** file in your IDE (I Used IntelliJ)
 
-# Run
-java -cp out com.escaperoom.Main
-```
 
-The venue starts pre-seeded with 4 rooms (Asylum-1, Vault-1, Lab-1, Cove-1)
-so you can use the CLI immediately. The menu is generated automatically —
-see "How the CLI menu is built" below.
-
-## What it does
+## What This Project does ❔
 
 - **Book / cancel bookings** for a room, customer, group size, and time slot
 - **Run live sessions**: start a session, track hints, end it as
@@ -38,7 +28,128 @@ see "How the CLI menu is built" below.
   average solve time, solve rate — all computed with Java Streams
 - **Search**: find bookings by (partial, case-insensitive) customer name
 
-## Design patterns used, and where
+## How to use it (important — read before trying it) 🐺
+
+The exact text you type matters. This section exists so nobody gets stuck
+wondering why an input "doesn't work" — in every case below, it's working
+correctly and rejecting bad input on purpose (that's the point of the
+validation/error handling).
+
+### The 4 rooms that exist by default 🏡
+
+| Room name | Theme | Difficulty | Max group size |
+|---|---|---|---|
+| `Asylum-1` | Haunted Asylum | 4/5 | 6 |
+| `Vault-1` | Bank Heist | 3/5 | 8 |
+| `Lab-1` | Alien Lab | 5/5 | 5 |
+| `Cove-1` | Pirate Treasure | 2/5 | 10 |
+
+- **Room names are case-sensitive and must match exactly.** Typing `vault-1`,
+  `Vault1`, or `Hex` (anything not in the table above) will fail with
+  `No such room: <what you typed>`. Use option **7 (View all rooms)** first
+  if you're unsure what rooms currently exist.
+- These are the *only* rooms that exist — there's no way to create a new
+  room from the CLI itself (room creation only happens in code, via
+  `RoomFactory`, at startup in `Main.java`).
+
+### Date/time format is strict 📅
+
+When prompted for a time slot, you **must** type it exactly as:
+
+```
+yyyy-MM-dd HH:mm
+```
+
+Example: `2026-07-06 18:00` (24-hour clock, dash-separated date, space
+before the time, colon in the time). Typing `06/07/2026 6pm` or
+`2026-07-06` (missing the time) will show:
+`Invalid date/time format. Expected yyyy-MM-dd HH:mm`
+
+### Group size must fit the room 🧑‍🤝‍🧑
+
+Each room has a max group size (see table above). Booking `Lab-1` (max 5)
+with a group size of `10` will fail with a clear error telling you the max.
+Group size must also be `1` or higher.
+
+### You need a Booking ID for options 2 and 3 (not a room name) 🆔
+
+Options **2 (Cancel)** and **3 (End session)** both need a **Booking ID** —
+NOT a room name or customer name. The Booking ID is the short code shown
+in `[square brackets]` after a successful booking, e.g.:
+
+```
+Booked! [e7a52197] Shenan booked 'Vault-1' for 4 people at ... - $92.00
+                    ^^^^^^^^
+                    This is the Booking ID you'll need later.
+```
+
+**Write it down or scroll back to find it** — there's currently no "list
+all booking IDs" view; option 5 (Search) or 7 (View rooms) don't show IDs
+directly for existing bookings other than through search results.
+
+Option **4 (Finish cleaning)** is different — it asks for a **room name**
+(e.g. `Vault-1`), not a booking ID, since cleaning is tied to the room
+itself rather than any specific booking.
+
+### Rooms must go through the correct sequence — you can't skip steps 🙅‍♀️
+
+A room follows a strict lifecycle, and trying to skip a step is *meant*
+to fail:
+
+```
+AVAILABLE → (book) → BOOKED → (start session) → IN_SESSION
+    ↑                                                  |
+    |                                            (end session)
+(finish cleaning) ← CLEANING ←————————————————————————┘
+```
+
+Concretely, this means:
+- You **cannot start a session** on a room that hasn't been booked yet
+  (option 6 will say *"cannot start a session - it hasn't been booked yet"*)
+- You **cannot end a session** that was never started (option 3 will say
+  *"no active session to end"*)
+- You **cannot cancel** a booking that's already in session or already
+  canceled
+- After a session **ends**, the room goes to `CLEANING`, not straight back
+  to `AVAILABLE` — you must run option 4 (Finish cleaning) before it can
+  be booked again. This is intentional (see "Cleaning buffer" below), not
+  a bug.
+- **Check a room's current status anytime with option 7** if you're not
+  sure what state it's in.
+
+### Search (option 5) matches partial names, and includes canceled bookings 🔎
+
+Typing `nadia` will match `Nadia`, `Nadia Fernando`, etc. (case-insensitive,
+partial match). Canceled bookings still show up in search results, tagged
+`(CANCELLED)` — this is deliberate, since search is a full booking history
+lookup, not just "active" bookings.
+
+### Quick example walkthrough (copy-paste friendly) 🥬
+
+```
+1                          → Book a room
+Vault-1                    → Room name
+Shenan                     → Customer name
+4                          → Group size
+2026-07-06 18:00           → Time slot
+                            → Note the Booking ID shown, e.g. e7a52197
+
+6                          → Start a live session
+e7a52197                   → (use YOUR actual booking ID)
+
+3                          → End a live session
+e7a52197
+y                          → Solved? yes
+
+4                          → Mark cleaning finished
+Vault-1
+
+7                          → View all rooms (confirm Vault-1 is AVAILABLE again)
+
+8                          → View statistics and reports
+```
+
+## Design patterns used, and where 📏
 
 | Pattern | Class(es) | Why it's there |
 |---|---|---|
@@ -49,7 +160,7 @@ see "How the CLI menu is built" below.
 | **Observer** | `observer.VenueEventPublisher`, `observer.VenueObserver`, `observer.StaffNotifier` | Decouples "something happened" from "who reacts to it" |
 | **Command** | `command.Command` + 8 concrete commands | Every CLI action is an object; enables the reflection-based menu below, and each command self-contains its own input handling |
 
-### Reflection
+### Reflection 
 
 `cli.CommandLineInterface` does **not** hardcode a menu. At startup it
 scans the `com.escaperoom.command` package on the classpath, finds every
@@ -91,7 +202,7 @@ Commands could be unit-tested without capturing stdout).
 - **D**ependency Inversion — `VenueManager` depends on the `PricingStrategy`
   and `VenueObserver` interfaces, never on concrete implementations
 
-## Project structure
+## Project structure 🐫
 
 ```
 src/main/java/com/escaperoom/
@@ -103,7 +214,22 @@ src/main/java/com/escaperoom/
 ├── observer/       Observer pattern (event notifications)
 ├── command/        Command pattern (CLI actions)
 ├── manager/        VenueManager (Singleton)
-├── cli/            CommandLineInterface (reflection) + ConsoleIO
-├── stats/          StatsService (functional programming / streams)
+├── cli/            CommandLineInterface (reflection) + ConsoleIO + ConsoleView
+├── stats/          StatsService + StatsReport (functional programming / streams)
 └── exception/      Custom checked exceptions
 ```
+
+## Troubleshooting 🫎
+
+**Menu shows "(0 commands auto-discovered via reflection)" and only option
+0 (Exit) appears.**
+
+This means the reflection-based scan in `CommandLineInterface` couldn't
+find the compiled `Command` classes on the classpath. Known cause: if the
+project sits under a folder path containing spaces (e.g. `OneDrive`,
+`Program Files`, or any multi-word folder name), an older version of this
+code could fail to resolve the path correctly. This is already fixed in
+the current version (`CommandLineInterface.discoverCommands()` uses
+`resource.toURI()`), so if you see this, make sure you're running the
+latest compiled classes — do a full **Rebuild Project** in your IDE, or
+delete the `out`/`target` folder and recompile from scratch.
