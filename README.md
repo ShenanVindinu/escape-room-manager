@@ -6,11 +6,11 @@ pricing, and reporting — built as a showcase of core software design
 principles (SOLID, design patterns, reflection, functional programming).
 
 ## How to run 🏃‍➡️
-
+```
 Requires JDK 17+.
 
-Simply Run **Main.java** file in your IDE (I Used IntelliJ)
-
+Simply Run Main.java file in your IDE (I Used IntelliJ)
+```
 
 ## What This Project does ❔
 
