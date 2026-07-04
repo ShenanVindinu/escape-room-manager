@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * The "Subject" half of the Observer pattern. Keeps a list of observers
  * and notifies all of them whenever something noteworthy happens at
- * the venue (room booked, freed, cleaning finished, etc).
+ * the venue (room booked, freed, cleaning finished, etc.).
  */
 public class VenueEventPublisher {
     private final List<VenueObserver> observers = new ArrayList<>();

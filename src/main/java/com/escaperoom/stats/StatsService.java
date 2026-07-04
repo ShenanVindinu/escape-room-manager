@@ -26,7 +26,7 @@ public class StatsService {
         this.venue = venue;
     }
 
-    /** Total revenue across all non-cancelled bookings. */
+    /** Total revenue across all non-canceled bookings. */
     public double getTotalRevenue() {
         return venue.getAllBookings().stream()
                 .filter(b -> !b.isCancelled())

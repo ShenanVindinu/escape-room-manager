@@ -5,7 +5,7 @@ import com.escaperoom.model.Room;
 /**
  * FACTORY METHOD PATTERN.
  *
- * Centralises the "default recipe" for each room theme (difficulty,
+ * Centralizes the "default recipe" for each room theme (difficulty,
  * max group size) so calling code just says "give me a Bank Heist room
  * called Vault-1" without needing to know the theme's default stats.
  */
